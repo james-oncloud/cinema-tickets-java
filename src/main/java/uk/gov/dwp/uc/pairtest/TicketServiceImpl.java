@@ -188,42 +188,4 @@ public class TicketServiceImpl implements TicketService {
         return context;
     }
 
-
-//    private PurchaseTicketsContext validateEnoughAdultsForChildrenWhenNoInfants(PurchaseTicketsContext context) {
-//        if (context.getRequests() == null || context.getRequests().length == 0) return context;
-//
-//        Map<TicketTypeRequest.Type, Integer> ticketsPerType =
-//                Arrays.stream(context.getRequests()).collect(countTicketsByType());
-//
-//        if(ticketsPerType.containsKey(ADULT) && ticketsPerType.containsKey(CHILD)) {
-//
-//            int adults   = ticketsPerType.getOrDefault(TicketTypeRequest.Type.ADULT, 0);
-//            int children = ticketsPerType.getOrDefault(TicketTypeRequest.Type.CHILD, 0);
-//            int infants  = ticketsPerType.getOrDefault(TicketTypeRequest.Type.INFANT, 0);
-//
-//            // Enforce only when there are no infants: need ≥ ceil(children / 7) adults
-//            if (children > 0 && infants == 0) {
-//                int requiredAdults = (children + 6) / 7; // ceil
-//                if (adults < requiredAdults) {
-//                    return context.with("Not enough adults for children (1 adult per 7 children required)");
-//                }
-//            }
-//        }
-//        return context;
-//    }
-
-//    private PurchaseTicketsContext validateEnoughAdultsForChildrenWhenNoInfants(PurchaseTicketsContext context) {
-//        if(context.getRequests() != null && context.getRequests().length > 0) {
-//            Map<TicketTypeRequest.Type, Integer> ticketsPerType =
-//                    Arrays.stream(context.getRequests()).collect(countTicketsByType());
-//            if(ticketsPerType.containsKey(ADULT) && ticketsPerType.containsKey(CHILD)) {
-//
-//                if(???) {
-//                    return context.with("Not enough adults for infants");
-//                }
-//            }
-//        }
-//        return context;
-//    }
-
 }

@@ -240,8 +240,4 @@ public class TicketServiceInvalidCasesTest {
         fail("should have thrown exception");
     }
 
-    //every 7 children should be accompanied by one adult
-        //so over 7 children and one adult is invalid
-        //and if one infant is present 7 drops to 3 children
-
 }
