@@ -53,7 +53,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(accountId, null);
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Argument for requests is null", e.getMessage());
+            Assertions.assertEquals("Requests array is null or empty", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -68,7 +68,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(accountId, new TicketTypeRequest[]{});
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("No requests for purchase", e.getMessage());
+            Assertions.assertEquals("Requests array is null or empty", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
