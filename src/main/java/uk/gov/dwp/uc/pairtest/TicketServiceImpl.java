@@ -9,11 +9,16 @@ import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
+import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.CHILD;
+import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
 
 class PurchaseTicketsContext {
     private final Long accountId;
@@ -75,12 +80,14 @@ public class TicketServiceImpl implements TicketService {
                 this::validateAccountId,
                 this::validateRequestsExists,
                 this::validateMaxTickets,
-                this::validateAdultPresent
+                this::validateAdultPresent,
+                this::validateOneInfantShouldBeManagedByOneAdult,
+                this::validateEnoughAdultsForChildren
         ).apply(new PurchaseTicketsContext(accountId, ticketTypeRequests));
 
         if(!context.getErrors().isEmpty()) {
-            String msg = String.join("\n", context.getErrors());
-            throw new InvalidPurchaseException(msg.trim());
+            String msg = String.join("\n", context.getErrors()).trim();
+            throw new InvalidPurchaseException(msg);
         }
 
         Totals totals = Arrays.stream(ticketTypeRequests).collect(
@@ -134,5 +141,89 @@ public class TicketServiceImpl implements TicketService {
         }
         return context;
     }
+
+    private static Collector<TicketTypeRequest, ?, Map<TicketTypeRequest.Type, Integer>> countTicketsByType() {
+        return Collectors.toMap(
+                TicketTypeRequest::getTicketType,
+                TicketTypeRequest::getNoOfTickets,
+                Integer::sum,
+                () -> new EnumMap<>(TicketTypeRequest.Type.class)
+        );
+    }
+
+    private PurchaseTicketsContext validateOneInfantShouldBeManagedByOneAdult(PurchaseTicketsContext context) {
+        if(context.getRequests() != null && context.getRequests().length > 0) {
+            Map<TicketTypeRequest.Type, Integer> ticketsPerType =
+                    Arrays.stream(context.getRequests()).collect(countTicketsByType());
+            if(ticketsPerType.containsKey(ADULT) && ticketsPerType.containsKey(INFANT)) {
+                if(ticketsPerType.get(ADULT) < ticketsPerType.get(INFANT)) {
+                    return context.with("Not enough adults for infants");
+                }
+            }
+        }
+        return context;
+    }
+
+    private PurchaseTicketsContext validateEnoughAdultsForChildren(PurchaseTicketsContext context) {
+        if (context.getRequests() == null || context.getRequests().length == 0) return context;
+
+        Map<TicketTypeRequest.Type, Integer> ticketsPerType =
+                Arrays.stream(context.getRequests()).collect(countTicketsByType());
+
+        if(ticketsPerType.containsKey(ADULT) && ticketsPerType.containsKey(CHILD)) {
+            int adults   = ticketsPerType.getOrDefault(TicketTypeRequest.Type.ADULT, 0);
+            int children = ticketsPerType.getOrDefault(TicketTypeRequest.Type.CHILD, 0);
+            int infants  = ticketsPerType.getOrDefault(TicketTypeRequest.Type.INFANT, 0);
+
+            int childrenPerAdult = (infants > 0) ? 3 : 7;
+
+            if (children > 0 && adults * childrenPerAdult < children) {
+                return context.with("Not enough adults for children (1 adult per "
+                        + childrenPerAdult + " children"
+                        + (infants > 0 ? " when infants are present" : "")
+                        + ")");
+            }
+        }
+
+        return context;
+    }
+
+
+//    private PurchaseTicketsContext validateEnoughAdultsForChildrenWhenNoInfants(PurchaseTicketsContext context) {
+//        if (context.getRequests() == null || context.getRequests().length == 0) return context;
+//
+//        Map<TicketTypeRequest.Type, Integer> ticketsPerType =
+//                Arrays.stream(context.getRequests()).collect(countTicketsByType());
+//
+//        if(ticketsPerType.containsKey(ADULT) && ticketsPerType.containsKey(CHILD)) {
+//
+//            int adults   = ticketsPerType.getOrDefault(TicketTypeRequest.Type.ADULT, 0);
+//            int children = ticketsPerType.getOrDefault(TicketTypeRequest.Type.CHILD, 0);
+//            int infants  = ticketsPerType.getOrDefault(TicketTypeRequest.Type.INFANT, 0);
+//
+//            // Enforce only when there are no infants: need ≥ ceil(children / 7) adults
+//            if (children > 0 && infants == 0) {
+//                int requiredAdults = (children + 6) / 7; // ceil
+//                if (adults < requiredAdults) {
+//                    return context.with("Not enough adults for children (1 adult per 7 children required)");
+//                }
+//            }
+//        }
+//        return context;
+//    }
+
+//    private PurchaseTicketsContext validateEnoughAdultsForChildrenWhenNoInfants(PurchaseTicketsContext context) {
+//        if(context.getRequests() != null && context.getRequests().length > 0) {
+//            Map<TicketTypeRequest.Type, Integer> ticketsPerType =
+//                    Arrays.stream(context.getRequests()).collect(countTicketsByType());
+//            if(ticketsPerType.containsKey(ADULT) && ticketsPerType.containsKey(CHILD)) {
+//
+//                if(???) {
+//                    return context.with("Not enough adults for infants");
+//                }
+//            }
+//        }
+//        return context;
+//    }
 
 }

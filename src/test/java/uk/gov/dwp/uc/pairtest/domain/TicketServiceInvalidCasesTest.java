@@ -173,7 +173,7 @@ public class TicketServiceInvalidCasesTest {
     }
 
     @Test
-    public void test_ChildAndInfantOnly_And_InvalidId_Tickets() {
+    public void test_ChildAndInfantOnly_And_InvalidAccountId_Tickets() {
 
         try {
             ticketService.purchaseTickets(0L,
@@ -190,4 +190,58 @@ public class TicketServiceInvalidCasesTest {
 
         fail("should have thrown exception");
     }
+
+    @Test
+    public void test_ThereCantBe_MoreInfantsThanAdults() {
+        try {
+            ticketService.purchaseTickets(1L,
+                    new TicketTypeRequest(INFANT, 2),
+                    new TicketTypeRequest(ADULT, 1)
+            );
+        } catch (InvalidPurchaseException e) {
+            assertEquals(true, e.getMessage().contains("Not enough adults for infants"));
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+        fail("should have thrown exception");
+    }
+
+    @Test
+    public void test_ForEvery7_Children_ThereShouldBe_NoLessThan_OneAdult() {
+        try {
+            ticketService.purchaseTickets(1L,
+                    new TicketTypeRequest(CHILD, 8),
+                    new TicketTypeRequest(ADULT, 1)
+            );
+        } catch (InvalidPurchaseException e) {
+            assertEquals(true, e.getMessage().contains("Not enough adults for children"));
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+        fail("should have thrown exception");
+    }
+
+    @Test
+    public void test_ForEvery3_Children_ThereShouldBe_NoLessThan_OneAdult_WhenThereAreInfants() {
+        try {
+            ticketService.purchaseTickets(1L,
+                    new TicketTypeRequest(CHILD, 6),
+                    new TicketTypeRequest(INFANT, 1),
+                    new TicketTypeRequest(ADULT, 1)
+            );
+        } catch (InvalidPurchaseException e) {
+            assertEquals(true, e.getMessage().contains("Not enough adults for children"));
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+        fail("should have thrown exception");
+    }
+
+    //every 7 children should be accompanied by one adult
+        //so over 7 children and one adult is invalid
+        //and if one infant is present 7 drops to 3 children
+
 }
