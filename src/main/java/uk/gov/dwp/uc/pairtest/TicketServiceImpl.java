@@ -66,10 +66,12 @@ public class TicketServiceImpl implements TicketService {
      * Should only have private methods other than the one below.
      */
 
+    record Totals(int totalNoOfTickets, int totalPrice) {}
+
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
 
-        PurchaseTicketsContext context = chain(
+        PurchaseTicketsContext context = validate(
                 this::validateAccountId,
                 this::validateRequestsExists,
                 this::validateMaxTickets,
@@ -81,20 +83,21 @@ public class TicketServiceImpl implements TicketService {
             throw new InvalidPurchaseException(msg.trim());
         }
 
-        int totalPrice = Arrays.stream(ticketTypeRequests)
-                .map(r -> r.getNoOfTickets() * ticketPriceLookupService.priceFor(r.getTicketType()))
-                .reduce(0, Integer::sum);
+        Totals totals = Arrays.stream(ticketTypeRequests).collect(
+                Collectors.teeing(
+                        Collectors.summingInt(TicketTypeRequest::getNoOfTickets),
+                        Collectors.summingInt(r -> r.getNoOfTickets() *
+                                ticketPriceLookupService.priceFor(r.getTicketType())),
+                        Totals::new
+                )
+        );
 
-        int totalNoOfTickets = Arrays.stream(ticketTypeRequests)
-                .map(TicketTypeRequest::getNoOfTickets)
-                .reduce(0, Integer::sum);
-
-        ticketPaymentService.makePayment(accountId, totalPrice);
-        seatReservationService.reserveSeat(accountId, totalNoOfTickets);
+        ticketPaymentService.makePayment(accountId, totals.totalPrice);
+        seatReservationService.reserveSeat(accountId, totals.totalNoOfTickets);
     }
 
     @SafeVarargs
-    public static <T> Function<T, T> chain(Function<T, T>... fns) {
+    private static <T> Function<T, T> validate(Function<T, T>... fns) {
         return Arrays.stream(fns).reduce(Function.identity(), Function::andThen);
     }
 
