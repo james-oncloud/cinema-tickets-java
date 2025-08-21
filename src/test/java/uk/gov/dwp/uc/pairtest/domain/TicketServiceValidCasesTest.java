@@ -92,4 +92,17 @@ public class TicketServiceValidCasesTest {
         verify(ticketPaymentService, times(1)).makePayment(accountId, 40);
         verify(seatReservationService, times(1)).reserveSeat(accountId, 2);
     }
+
+    @Test
+    public void test_Purchase_ThreeAdults_Tickets() {
+
+        when(ticketPriceLookupService.priceFor(ADULT)).thenReturn(25);
+
+        ticketService.purchaseTickets(accountId,
+                new TicketTypeRequest(ADULT, 3)
+        );
+
+        verify(ticketPaymentService, times(1)).makePayment(accountId, 75);
+        verify(seatReservationService, times(1)).reserveSeat(accountId, 3);
+    }
 }
