@@ -17,7 +17,7 @@ import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.CHILD;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
 
-public class TicketServiceTest {
+public class TicketServiceValidCasesTest {
 
     long accountId = 1;
     TicketService ticketService;
