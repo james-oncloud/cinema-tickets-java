@@ -19,6 +19,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
+import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
 
 public class TicketServiceInvalidCasesTest {
 
@@ -100,6 +101,21 @@ public class TicketServiceInvalidCasesTest {
             ticketService.purchaseTickets(accountId, requests);
         } catch (InvalidPurchaseException e) {
             Assertions.assertEquals("Too many tickets in purchase", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
+    }
+
+    @Test
+    public void test_InfantOnly_Tickets() {
+
+        try {
+            ticketService.purchaseTickets(accountId, new TicketTypeRequest(INFANT, 1));
+        } catch (InvalidPurchaseException e) {
+            Assertions.assertEquals("Infants only purchase not allowed", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;

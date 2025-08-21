@@ -7,6 +7,9 @@ import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
 
 public class TicketServiceImpl implements TicketService {
 
@@ -41,6 +44,14 @@ public class TicketServiceImpl implements TicketService {
 
         if(ticketTypeRequests.length > 25) {
             throw new InvalidPurchaseException("Too many tickets in purchase");
+        }
+
+        boolean includeAdult = Arrays.stream(ticketTypeRequests)
+                .collect(Collectors.groupingBy(TicketTypeRequest::getTicketType))
+                .containsKey(ADULT);
+        boolean noAdultsIncluded = !includeAdult;
+        if(noAdultsIncluded) {
+            throw new InvalidPurchaseException("Infants only purchase not allowed");
         }
 
         int totalPrice = Arrays.stream(ticketTypeRequests)
