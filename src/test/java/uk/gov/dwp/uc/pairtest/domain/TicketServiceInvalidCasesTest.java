@@ -10,6 +10,9 @@ import uk.gov.dwp.uc.pairtest.TicketService;
 import uk.gov.dwp.uc.pairtest.TicketServiceImpl;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -79,6 +82,24 @@ public class TicketServiceInvalidCasesTest {
             ticketService.purchaseTickets(0L, new TicketTypeRequest(ADULT, 1));
         } catch (InvalidPurchaseException e) {
             Assertions.assertEquals("Account Id should be greater than zero", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
+    }
+
+    @Test
+    public void test_Over25_Tickets() {
+
+        try {
+            TicketTypeRequest[] requests = IntStream.range(0, 26)
+                    .mapToObj(i -> new TicketTypeRequest(ADULT, 1))
+                    .toArray(TicketTypeRequest[]::new);
+            ticketService.purchaseTickets(accountId, requests);
+        } catch (InvalidPurchaseException e) {
+            Assertions.assertEquals("Too many tickets in purchase", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;

@@ -39,6 +39,10 @@ public class TicketServiceImpl implements TicketService {
             throw new InvalidPurchaseException("No requests for purchase");
         }
 
+        if(ticketTypeRequests.length > 25) {
+            throw new InvalidPurchaseException("Too many tickets in purchase");
+        }
+
         int totalPrice = Arrays.stream(ticketTypeRequests)
                 .map(r -> r.getNoOfTickets() * ticketPriceLookupService.priceFor(r.getTicketType()))
                 .reduce(0, Integer::sum);
