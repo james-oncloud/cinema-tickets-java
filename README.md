@@ -17,6 +17,7 @@ Please quote your candidate number and campaign number in the subject header, ot
 By submitting your solution to us you assert that it is wholly your original work and not a copy. There is no stated time limit but allow at least few hours. The important thing is to arrive at a solution that you are satisfied with and comfortable discussing with others.
 
 Instructions:
+
 # Objective
 This is a coding exercise which will allow you to demonstrate how you code and your approach to a given problem.
 
@@ -33,35 +34,30 @@ You will be assessed on:
 - Infants do not pay for a ticket and are not allocated a seat. They will be sitting on an Adult's lap.
 - Child and Infant tickets cannot be purchased without purchasing an Adult ticket.
 
-|   Ticket Type    |     Price   |
-| ---------------- | ----------- |
-|    INFANT        |    £0       |
-|    CHILD         |    £15     |
-|    ADULT         |    £25      |
+|   Ticket Type    | Price    |
+| ---------------- |----------|
+|    INFANT        | £0       |
+|    CHILD         | £15      |
+|    ADULT         | £25      |
 - There is an existing `TicketPaymentService` responsible for taking payments.
 - There is an existing `SeatReservationService` responsible for reserving seats.
-## Constraints
 
+## Constraints
 - The TicketService interface CANNOT be modified.
 - The code in the thirdparty.* packages CANNOT be modified.
 - The `TicketTypeRequest` SHOULD be an immutable object.
-## Assumptions
 
+## Assumptions
 You can assume:
 - All accounts with an id greater than zero are valid. They also have sufficient funds to pay for any no of tickets.
 - The `TicketPaymentService` implementation is an external provider with no defects. You do not need to worry about how the actual payment happens.
 - The payment will always go through once a payment request has been made to the `TicketPaymentService`.
 - The `SeatReservationService` implementation is an external provider with no defects. You do not need to worry about how the seat reservation algorithm works.
 - The seat will always be reserved once a reservation request has been made to the `SeatReservationService`.
-## Your Task
 
+## Your Task
 Provide a working implementation of a `TicketService` that:
 - Considers the above objective, business rules, constraints & assumptions.
 - Calculates the correct amount for the requested tickets and makes a payment request to the `TicketPaymentService`.
 - Calculates the correct no of seats to reserve and makes a seat reservation request to the `SeatReservationService`.
 - Rejects any invalid ticket purchase requests. It is up to you to identify what should be deemed as an invalid purchase request.”
-
-
-Kind regards
-
-Department for Work and Pensions recruitment team

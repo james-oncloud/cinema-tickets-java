@@ -10,13 +10,11 @@ import uk.gov.dwp.uc.pairtest.TicketService;
 import uk.gov.dwp.uc.pairtest.TicketServiceImpl;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
-import java.util.Arrays;
-
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
 
 public class TicketServiceInvalidCasesTest {
@@ -45,15 +43,47 @@ public class TicketServiceInvalidCasesTest {
     }
 
     @Test
+    public void test_NullRequests() {
+
+        try {
+            ticketService.purchaseTickets(accountId, null);
+        } catch (InvalidPurchaseException e) {
+            Assertions.assertEquals("Argument for requests is null", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
+    }
+
+    @Test
     public void test_NoRequests() {
 
         try {
             ticketService.purchaseTickets(accountId, new TicketTypeRequest[]{});
         } catch (InvalidPurchaseException e) {
             Assertions.assertEquals("No requests for purchase", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
         }
 
-        verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
-        verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+        fail("should have thrown exception");
+    }
+
+    @Test
+    public void test_InvalidAccountId() {
+
+        try {
+            ticketService.purchaseTickets(0L, new TicketTypeRequest(ADULT, 1));
+        } catch (InvalidPurchaseException e) {
+            Assertions.assertEquals("Account Id should be greater than zero", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
     }
 }
