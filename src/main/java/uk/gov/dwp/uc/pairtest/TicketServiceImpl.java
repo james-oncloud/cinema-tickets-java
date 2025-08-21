@@ -51,7 +51,7 @@ public class TicketServiceImpl implements TicketService {
                 .containsKey(ADULT);
         boolean noAdultsIncluded = !includeAdult;
         if(noAdultsIncluded) {
-            throw new InvalidPurchaseException("Infants only purchase not allowed");
+            throw new InvalidPurchaseException("Infants or Child only purchase not allowed");
         }
 
         int totalPrice = Arrays.stream(ticketTypeRequests)
