@@ -2,17 +2,22 @@ package uk.gov.dwp.uc.pairtest;
 
 import thirdparty.paymentgateway.TicketPaymentService;
 import thirdparty.seatbooking.SeatReservationService;
+import uk.gov.dwp.uc.pairtest.domain.TicketPriceLookupService;
 import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
+
+import java.util.Arrays;
 
 public class TicketServiceImpl implements TicketService {
 
     private final TicketPaymentService ticketPaymentService;
     private final SeatReservationService seatReservationService;
+    private final TicketPriceLookupService ticketPriceLookupService;
 
-    public TicketServiceImpl(TicketPaymentService ticketPaymentService, SeatReservationService seatReservationService) {
+    public TicketServiceImpl(TicketPaymentService ticketPaymentService, SeatReservationService seatReservationService, TicketPriceLookupService ticketPriceLookupService) {
         this.ticketPaymentService = ticketPaymentService;
         this.seatReservationService = seatReservationService;
+        this.ticketPriceLookupService = ticketPriceLookupService;
     }
 
     /**
@@ -22,8 +27,16 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
 
-        ticketPaymentService.makePayment(accountId, 25);
-        seatReservationService.reserveSeat(accountId, 1);
+        int totalPrice = Arrays.stream(ticketTypeRequests)
+                .map(r -> r.getNoOfTickets() * ticketPriceLookupService.priceFor(r.getTicketType()))
+                .reduce(0, Integer::sum);
+
+        int totalNoOfTickets = Arrays.stream(ticketTypeRequests)
+                .map(TicketTypeRequest::getNoOfTickets)
+                .reduce(0, Integer::sum);
+
+        ticketPaymentService.makePayment(accountId, totalPrice);
+        seatReservationService.reserveSeat(accountId, totalNoOfTickets);
     }
 
 }
