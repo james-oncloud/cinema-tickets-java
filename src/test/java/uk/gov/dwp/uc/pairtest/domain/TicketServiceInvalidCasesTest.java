@@ -139,4 +139,22 @@ public class TicketServiceInvalidCasesTest {
 
         fail("should have thrown exception");
     }
+
+    @Test
+    public void test_ChildAndInfantOnly_Tickets() {
+
+        try {
+            ticketService.purchaseTickets(accountId,
+                    new TicketTypeRequest(CHILD, 1),
+                    new TicketTypeRequest(INFANT, 1)
+            );
+        } catch (InvalidPurchaseException e) {
+            Assertions.assertEquals("Infants or Child only purchase not allowed", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
+    }
 }
