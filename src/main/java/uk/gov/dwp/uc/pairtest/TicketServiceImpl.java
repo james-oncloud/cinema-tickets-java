@@ -30,7 +30,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
 
-        if(accountId < 1) {
+        if(accountId == null || accountId < 1) {
             throw new InvalidPurchaseException("Account Id should be greater than zero");
         }
 

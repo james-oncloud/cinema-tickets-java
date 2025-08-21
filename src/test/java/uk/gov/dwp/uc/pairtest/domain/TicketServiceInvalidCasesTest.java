@@ -93,6 +93,21 @@ public class TicketServiceInvalidCasesTest {
     }
 
     @Test
+    public void test_NullAccountId() {
+
+        try {
+            ticketService.purchaseTickets(null, new TicketTypeRequest(ADULT, 1));
+        } catch (InvalidPurchaseException e) {
+            Assertions.assertEquals("Account Id should be greater than zero", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
+    }
+
+    @Test
     public void test_Over25_Tickets() {
 
         try {
