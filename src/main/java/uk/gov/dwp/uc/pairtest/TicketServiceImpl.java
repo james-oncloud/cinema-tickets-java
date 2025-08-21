@@ -20,21 +20,15 @@ import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.CHILD;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
 
-class PurchaseTicketsContext {
+class ValidationContext {
     private final Long accountId;
     private final TicketTypeRequest[] requests;
     private final List<String> errors;
 
-    public PurchaseTicketsContext(Long accountId, TicketTypeRequest[] requests) {
+    public ValidationContext(Long accountId, TicketTypeRequest[] requests) {
         this.accountId = accountId;
         this.requests = requests;
         this.errors = new ArrayList<>();
-    }
-
-    public PurchaseTicketsContext(Long accountId, TicketTypeRequest[] requests, List<String> errors) {
-        this.accountId = accountId;
-        this.requests = requests;
-        this.errors = errors;
     }
 
     public Long getAccountId() {
@@ -49,9 +43,9 @@ class PurchaseTicketsContext {
         return Collections.unmodifiableList(errors);
     }
 
-    public PurchaseTicketsContext with(String error) {
+    public ValidationContext with(String error) {
         this.errors.add(error);
-        return new PurchaseTicketsContext(this.accountId, this.requests, this.errors);
+        return this;
     }
 }
 
@@ -76,14 +70,14 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public void purchaseTickets(Long accountId, TicketTypeRequest... ticketTypeRequests) throws InvalidPurchaseException {
 
-        PurchaseTicketsContext context = validate(
+        ValidationContext context = validate(
                 this::validateAccountId,
                 this::validateRequestsExists,
                 this::validateMaxTickets,
                 this::validateAdultPresent,
                 this::validateOneInfantShouldBeManagedByOneAdult,
                 this::validateEnoughAdultsForChildren
-        ).apply(new PurchaseTicketsContext(accountId, ticketTypeRequests));
+        ).apply(new ValidationContext(accountId, ticketTypeRequests));
 
         if(!context.getErrors().isEmpty()) {
             String msg = String.join("\n", context.getErrors()).trim();
@@ -108,28 +102,28 @@ public class TicketServiceImpl implements TicketService {
         return Arrays.stream(fns).reduce(Function.identity(), Function::andThen);
     }
 
-    private PurchaseTicketsContext validateAccountId(PurchaseTicketsContext context) {
+    private ValidationContext validateAccountId(ValidationContext context) {
         if(context.getAccountId() == null || context.getAccountId() < 1) {
             return context.with("Account Id should be greater than zero");
         }
         return context;
     }
 
-    private PurchaseTicketsContext validateRequestsExists(PurchaseTicketsContext context) {
+    private ValidationContext validateRequestsExists(ValidationContext context) {
         if(context.getRequests() == null || context.getRequests().length == 0) {
             return context.with("Requests array is null or empty");
         }
         return context;
     }
 
-    private PurchaseTicketsContext validateMaxTickets(PurchaseTicketsContext context) {
+    private ValidationContext validateMaxTickets(ValidationContext context) {
         if(context.getRequests() != null && context.getRequests().length > 25) {
             return context.with("Too many tickets in purchase");
         }
         return context;
     }
 
-    private PurchaseTicketsContext validateAdultPresent(PurchaseTicketsContext context) {
+    private ValidationContext validateAdultPresent(ValidationContext context) {
         if(context.getRequests() != null && context.getRequests().length > 0) {
             boolean includeAdult = Arrays.stream(context.getRequests())
                     .collect(Collectors.groupingBy(TicketTypeRequest::getTicketType))
@@ -151,7 +145,7 @@ public class TicketServiceImpl implements TicketService {
         );
     }
 
-    private PurchaseTicketsContext validateOneInfantShouldBeManagedByOneAdult(PurchaseTicketsContext context) {
+    private ValidationContext validateOneInfantShouldBeManagedByOneAdult(ValidationContext context) {
         if(context.getRequests() != null && context.getRequests().length > 0) {
             Map<TicketTypeRequest.Type, Integer> ticketsPerType =
                     Arrays.stream(context.getRequests()).collect(countTicketsByType());
@@ -164,7 +158,7 @@ public class TicketServiceImpl implements TicketService {
         return context;
     }
 
-    private PurchaseTicketsContext validateEnoughAdultsForChildren(PurchaseTicketsContext context) {
+    private ValidationContext validateEnoughAdultsForChildren(ValidationContext context) {
         if (context.getRequests() == null || context.getRequests().length == 0) return context;
 
         Map<TicketTypeRequest.Type, Integer> ticketsPerType =
