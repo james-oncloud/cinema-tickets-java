@@ -1,7 +1,6 @@
 package uk.gov.dwp.uc.pairtest.domain;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import thirdparty.paymentgateway.TicketPaymentService;
@@ -10,9 +9,9 @@ import uk.gov.dwp.uc.pairtest.TicketService;
 import uk.gov.dwp.uc.pairtest.TicketServiceImpl;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
 
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -53,7 +52,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(accountId, null);
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Requests array is null or empty", e.getMessage());
+            assertEquals("Requests array is null or empty", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -68,7 +67,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(accountId, new TicketTypeRequest[]{});
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Requests array is null or empty", e.getMessage());
+            assertEquals("Requests array is null or empty", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -83,7 +82,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(0L, new TicketTypeRequest(ADULT, 1));
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Account Id should be greater than zero", e.getMessage());
+            assertEquals("Account Id should be greater than zero", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -98,7 +97,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(null, new TicketTypeRequest(ADULT, 1));
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Account Id should be greater than zero", e.getMessage());
+            assertEquals("Account Id should be greater than zero", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -116,7 +115,7 @@ public class TicketServiceInvalidCasesTest {
                     .toArray(TicketTypeRequest[]::new);
             ticketService.purchaseTickets(accountId, requests);
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Too many tickets in purchase", e.getMessage());
+            assertEquals("Too many tickets in purchase", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -131,7 +130,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(accountId, new TicketTypeRequest(INFANT, 1));
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Infants or Child only purchase not allowed", e.getMessage());
+            assertEquals("Infants or Child only purchase not allowed", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -146,7 +145,7 @@ public class TicketServiceInvalidCasesTest {
         try {
             ticketService.purchaseTickets(accountId, new TicketTypeRequest(CHILD, 1));
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Infants or Child only purchase not allowed", e.getMessage());
+            assertEquals("Infants or Child only purchase not allowed", e.getMessage());
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
@@ -164,7 +163,26 @@ public class TicketServiceInvalidCasesTest {
                     new TicketTypeRequest(INFANT, 1)
             );
         } catch (InvalidPurchaseException e) {
-            Assertions.assertEquals("Infants or Child only purchase not allowed", e.getMessage());
+            assertEquals("Infants or Child only purchase not allowed", e.getMessage());
+            verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
+            verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
+            return;
+        }
+
+        fail("should have thrown exception");
+    }
+
+    @Test
+    public void test_ChildAndInfantOnly_And_InvalidId_Tickets() {
+
+        try {
+            ticketService.purchaseTickets(0L,
+                    new TicketTypeRequest(CHILD, 1),
+                    new TicketTypeRequest(INFANT, 1)
+            );
+        } catch (InvalidPurchaseException e) {
+            assertEquals(true, e.getMessage().contains("Infants or Child only purchase not allowed"));
+            assertEquals(true, e.getMessage().contains("Account Id should be greater than zero"));
             verify(ticketPaymentService, times(0)).makePayment(accountId, 0);
             verify(seatReservationService, times(0)).reserveSeat(accountId, 0);
             return;
