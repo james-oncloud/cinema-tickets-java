@@ -2,6 +2,7 @@ package uk.gov.dwp.uc.pairtest;
 
 import thirdparty.paymentgateway.TicketPaymentService;
 import thirdparty.seatbooking.SeatReservationService;
+import uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService;
 import uk.gov.dwp.uc.pairtest.domain.TicketPriceLookupService;
 import uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest;
 import uk.gov.dwp.uc.pairtest.exception.InvalidPurchaseException;
@@ -17,6 +18,9 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService.KEY_MAX_CHILDREN_WITH_ADULT;
+import static uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService.KEY_MAX_CHILDREN_WITH_ADULT_WITH_INFANT;
+import static uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService.KEY_MAX_PURCHASE_TICKETS;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.CHILD;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
@@ -26,17 +30,28 @@ public class TicketServiceImpl implements TicketService {
     public static final String LINE_BREAK = "\n";
     public static final int ONE_ITEM = 1;
     public static final int ZERO_ITEMS = 0;
-    public static final int MAX_TICKETS = 25;
-    public static final int MAX_CHIDREN_WITH_ONE_ADULT_WITH_INFANT = 3;
-    public static final int MAX_CHIDREN_WITH_ONE_ADULT = 7;
+
     private final TicketPaymentService ticketPaymentService;
     private final SeatReservationService seatReservationService;
     private final TicketPriceLookupService ticketPriceLookupService;
+    private final CinemaTicketsConfigService cinemaTicketsConfigService;
 
-    public TicketServiceImpl(TicketPaymentService ticketPaymentService, SeatReservationService seatReservationService, TicketPriceLookupService ticketPriceLookupService) {
+    public final int maxPurchaseTicket;
+    public final int maxChildrenWithOneAdult;
+    public final int maxChildrenWithOneAdultWithInfant;
+
+    public TicketServiceImpl(TicketPaymentService ticketPaymentService,
+                             SeatReservationService seatReservationService,
+                             TicketPriceLookupService ticketPriceLookupService,
+                             CinemaTicketsConfigService cinemaTicketsConfigService) {
         this.ticketPaymentService = ticketPaymentService;
         this.seatReservationService = seatReservationService;
         this.ticketPriceLookupService = ticketPriceLookupService;
+        this.cinemaTicketsConfigService = cinemaTicketsConfigService;
+
+        maxPurchaseTicket = cinemaTicketsConfigService.getIntConfig(KEY_MAX_PURCHASE_TICKETS);
+        maxChildrenWithOneAdult = cinemaTicketsConfigService.getIntConfig(KEY_MAX_CHILDREN_WITH_ADULT);
+        maxChildrenWithOneAdultWithInfant = cinemaTicketsConfigService.getIntConfig(KEY_MAX_CHILDREN_WITH_ADULT_WITH_INFANT);
     }
 
     /**
@@ -100,7 +115,8 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private ValidationContext validateMaxTickets(ValidationContext context) {
-        if(context.getRequests() != null && context.getRequests().length > MAX_TICKETS) {
+        if(context.getRequests() != null &&
+                context.getRequests().length > cinemaTicketsConfigService.getIntConfig(KEY_MAX_PURCHASE_TICKETS)) {
             return context.addError("Too many tickets in purchase");
         }
         return context;
@@ -152,7 +168,7 @@ public class TicketServiceImpl implements TicketService {
             int children = ticketsPerType.getOrDefault(TicketTypeRequest.Type.CHILD, ZERO_ITEMS);
             int infants  = ticketsPerType.getOrDefault(TicketTypeRequest.Type.INFANT, ZERO_ITEMS);
 
-            int childrenPerAdult = (infants > ZERO_ITEMS) ? MAX_CHIDREN_WITH_ONE_ADULT_WITH_INFANT : MAX_CHIDREN_WITH_ONE_ADULT;
+            int childrenPerAdult = (infants > ZERO_ITEMS) ? maxChildrenWithOneAdultWithInfant : maxChildrenWithOneAdult;
 
             if (children > 0 && adults * childrenPerAdult < children) {
                 return context.addError("Not enough adults for children (1 adult per "

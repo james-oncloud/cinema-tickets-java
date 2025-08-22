@@ -13,6 +13,9 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService.KEY_MAX_CHILDREN_WITH_ADULT;
+import static uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService.KEY_MAX_CHILDREN_WITH_ADULT_WITH_INFANT;
+import static uk.gov.dwp.uc.pairtest.domain.CinemaTicketsConfigService.KEY_MAX_PURCHASE_TICKETS;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.ADULT;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.CHILD;
 import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
@@ -25,6 +28,7 @@ public class TicketServiceValidCasesTest {
     TicketPaymentService ticketPaymentService;
     SeatReservationService seatReservationService;
     TicketPriceLookupService ticketPriceLookupService;
+    CinemaTicketsConfigService cinemaTicketsConfigService;
 
     @BeforeEach
     public void setUp() {
@@ -32,9 +36,16 @@ public class TicketServiceValidCasesTest {
         ticketPaymentService = mock(TicketPaymentService.class);
         seatReservationService = mock(SeatReservationService.class);
         ticketPriceLookupService = mock(TicketPriceLookupService.class);
+        cinemaTicketsConfigService = mock(CinemaTicketsConfigService.class);
 
+        when(cinemaTicketsConfigService.getIntConfig(KEY_MAX_PURCHASE_TICKETS)).thenReturn(25);
+        when(cinemaTicketsConfigService.getIntConfig(KEY_MAX_CHILDREN_WITH_ADULT)).thenReturn(7);
+        when(cinemaTicketsConfigService.getIntConfig(KEY_MAX_CHILDREN_WITH_ADULT_WITH_INFANT)).thenReturn(3);
 
-        ticketService = new TicketServiceImpl(ticketPaymentService, seatReservationService, ticketPriceLookupService);
+        ticketService = new TicketServiceImpl(ticketPaymentService,
+                seatReservationService,
+                ticketPriceLookupService,
+                cinemaTicketsConfigService);
     }
 
     @AfterEach
